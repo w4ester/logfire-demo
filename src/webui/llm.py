@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import json
 from collections.abc import AsyncIterable
-from random import random
 from typing import Annotated
 from uuid import UUID
 
@@ -19,6 +18,7 @@ from starlette.responses import StreamingResponse
 from ..common import AsyncClientDep
 from ..common.db import Database
 from .shared import demo_page
+import secrets
 
 router = APIRouter()
 
@@ -108,7 +108,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
         chunks = json.loads(chunks_json)
         output = ''
         try:
-            await asyncio.sleep(0.5 + random() * 0.5)
+            await asyncio.sleep(0.5 + secrets.SystemRandom().random() * 0.5)
             with logfire.span('saved result {messages=}', messages=messages) as logfire_span:
                 for chunk in chunks:
                     if chunk is not None:
@@ -117,7 +117,7 @@ async def llm_stream(db: Database, http_client: AsyncClientDep, chat_id: UUID) -
 
                     # 0.12s delay is taken roughly from
                     # https://github.com/pydantic/FastUI/blob/196414360b69b3dab7012576f852229831307883/demo/sse.py#L66C1-L388C2
-                    await asyncio.sleep(random() * 0.12)
+                    await asyncio.sleep(secrets.SystemRandom().random() * 0.12)
                 logfire_span.set_attribute('output', output)
         finally:
             async with db.acquire() as conn:
