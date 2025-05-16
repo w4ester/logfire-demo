@@ -1,10 +1,10 @@
 import asyncio
 import json
-import random
 from typing import Any
 
 import logfire
 from httpx import AsyncClient, Response
+import secrets
 
 requests_counter = logfire.metric_counter(
     'requests',
@@ -27,10 +27,10 @@ async def get_cities(client: AsyncClient, country: str | None = None):
         cities = r.json()[2]['components'][3]['data']
         assert isinstance(cities, list)
 
-        await asyncio.sleep(random.random() * 8)
-        if country or random.random() > 0.5:
+        await asyncio.sleep(secrets.SystemRandom().random() * 8)
+        if country or secrets.SystemRandom().random() > 0.5:
             with logfire.span('get city'):
-                city = random.choice(cities)
+                city = secrets.choice(cities)
                 await _request(client, f'/api/table/{city["id"]}')
         else:
             await search_cities(client)
@@ -39,14 +39,14 @@ async def get_cities(client: AsyncClient, country: str | None = None):
 async def search_cities(client: AsyncClient):
     with logfire.span('search_cities'):
         searches = 'united', 'mexi', 'ind', 'chin', 'jap', 'braz', 'nig'
-        search = random.choice(searches)
+        search = secrets.choice(searches)
         r = await _request(client, '/api/table/search', params={'q': search})
 
         options = r.json()['options']
         assert isinstance(options, list)
-        option = random.choice(options)
-        country = random.choice(option['options'])['value']
-        await asyncio.sleep(random.random() * 4)
+        option = secrets.choice(options)
+        country = secrets.choice(option['options'])['value']
+        await asyncio.sleep(secrets.SystemRandom().random() * 4)
         await get_cities(client, country=country)
 
 
@@ -59,7 +59,7 @@ async def llm_query(client: AsyncClient):
         'Write me a recursive function to find a value in JSON for a particular key, in TypeScript',
         'Write me an example recursive Postgres query',
     )
-    prompt = random.choice(prompts)
+    prompt = secrets.choice(prompts)
     follow_ups = (
         'another please',
         'Can you give more context',
@@ -70,17 +70,17 @@ async def llm_query(client: AsyncClient):
         r = await _request(client, '/api/llm')
         submit_url = _find_key(r.json(), 'submitUrl')
         for i in range(3):
-            await asyncio.sleep(random.random() * 8)
+            await asyncio.sleep(secrets.SystemRandom().random() * 8)
             with logfire.span('llm_query {prompt=!r}', prompt=prompt, iteration=i) as span:
                 r = await _request(client, submit_url, method='POST', data={'prompt': prompt})
                 sse_endpoint = r.json()[1]['path']
                 response = await stream_sse(client, sse_endpoint)
                 span.set_attribute('response', response)
-                if random.random() > 0.8:
+                if secrets.SystemRandom().random() > 0.8:
                     break
 
                 submit_url = _find_key(r.json(), 'submitUrl')
-                prompt = random.choice(follow_ups)
+                prompt = secrets.choice(follow_ups)
 
 
 async def stream_sse(client: AsyncClient, sse_endpoint: str) -> str | None:

@@ -1,7 +1,6 @@
 import asyncio
 import io
 import math
-import random
 from asyncio import Semaphore
 from collections.abc import Awaitable, Iterator, Sequence
 from statistics import mean
@@ -10,6 +9,7 @@ from time import time
 import logfire
 from httpx import AsyncClient
 from PIL import Image, ImageDraw
+import secrets
 
 __all__ = ('BuildMap',)
 
@@ -98,7 +98,7 @@ class BuildMap:
             return
         # wraps map around at edges
         osm_x = osm_x % self.no_tiles
-        root = OSM_ROOT.format(shard=random.choice(SHARDS))
+        root = OSM_ROOT.format(shard=secrets.choice(SHARDS))
         url = URL_TEMPLATE.format(url_root=root, zoom=self.zoom, x=osm_x, y=osm_y)
         # debug(url, osm_x, osm_y, image_x, image_y)
 
